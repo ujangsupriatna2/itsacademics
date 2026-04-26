@@ -2172,13 +2172,16 @@ function CalculatorSection() {
                     Pilih Properti
                   </Label>
                   <Select value={effectivePropId} onValueChange={handlePropertyChange}>
-                    <SelectTrigger className="h-12 text-base">
+                    <SelectTrigger className="h-12 text-sm md:text-base w-full !whitespace-normal">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-w-[min(90vw,20rem)]">
                       {PROPERTIES.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.name} — Rp {p.price} Juta
+                        <SelectItem key={p.id} value={p.id} className="py-3">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-semibold text-sm leading-tight">{p.name}</span>
+                            <span className="text-xs text-gray-500">Rp {p.price} Juta</span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
