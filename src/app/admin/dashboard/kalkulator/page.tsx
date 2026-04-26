@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import {
   Calculator,
   Building2,
@@ -12,6 +12,12 @@ import {
   Check,
   RotateCcw,
   Info,
+  FileText,
+  Printer,
+  Download,
+  Eye,
+  X,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +31,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 // ──── Helpers ────
 function formatRupiah(amount: number): string {
@@ -34,6 +43,14 @@ function formatRupiah(amount: number): string {
 
 function formatJuta(amount: number): string {
   return (amount / 1_000_000).toFixed(1);
+}
+
+function todayStr() {
+  return new Date().toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
 
 // KPR flat rate calculation
@@ -47,7 +64,7 @@ function calcKPRMonthlyFlat(
   return (loanAmount + totalInterest) / totalMonths;
 }
 
-// KPR annuity (effective rate) — more realistic
+// KPR annuity (effective rate)
 function calcKPRMonthlyAnnuity(
   loanAmount: number,
   annualRate: number,
@@ -75,6 +92,285 @@ function calcSyariahMonthly(
   return loanAmount / totalMonths;
 }
 
+// ──── PDF / Print helpers ────
+async function exportPDF(printRef: React.RefObject<HTMLDivElement | null>, filename: string) {
+  if (!printRef.current) return;
+  toast.loading("Membuat PDF...");
+  try {
+    const canvas = await html2canvas(printRef.current, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+    });
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = (canvas.height * pdfW) / canvas.width;
+    pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
+    pdf.save(filename);
+    toast.dismiss();
+    toast.success("PDF berhasil diunduh!");
+  } catch {
+    toast.dismiss();
+    toast.error("Gagal membuat PDF. Coba gunakan Print.");
+  }
+}
+
+function handlePrint(printRef: React.RefObject<HTMLDivElement | null>) {
+  if (!printRef.current) return;
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    toast.error("Pop-up diblokir. Izinkan pop-up untuk print.");
+    return;
+  }
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Simulasi Cicilan</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; padding: 20px; color: #111; }
+        .page { max-width: 210mm; margin: 0 auto; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        th, td { border: 1px solid #d1d5db; padding: 8px 12px; text-align: left; font-size: 13px; }
+        th { background: #f3f4f6; font-weight: 600; }
+        .right { text-align: right; }
+        .center { text-align: center; }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #dc2626; padding-bottom: 12px; }
+        .header h1 { font-size: 20px; color: #dc2626; }
+        .header p { font-size: 12px; color: #6b7280; margin-top: 4px; }
+        .section-title { font-size: 14px; font-weight: 700; margin: 16px 0 8px; color: #374151; }
+        .highlight-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 12px 0; text-align: center; }
+        .highlight-box .amount { font-size: 24px; font-weight: 800; color: #dc2626; }
+        .highlight-box .label { font-size: 12px; color: #6b7280; }
+        .note { font-size: 11px; color: #9ca3af; margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 8px; }
+        @media print {
+          body { padding: 10mm; }
+          .no-print { display: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="page">
+        ${printRef.current.innerHTML}
+      </div>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+  }, 500);
+}
+
+// ──── Types ────
+interface KPRResult {
+  propertyPrice: number;
+  dpAmount: number;
+  dpPercent: number;
+  loanAmount: number;
+  monthly: number;
+  tenorYears: number;
+  totalPayment: number;
+  totalInterest: number;
+  annualRate: number;
+}
+
+interface SyariahResult {
+  propertyPrice: number;
+  dpAmount: number;
+  dpPercent: number;
+  sellingPrice: number;
+  loanAmount: number;
+  monthly: number;
+  tenorYears: number;
+  totalPayment: number;
+  profitAmount: number;
+  marginPercent: number;
+}
+
+// ──── KPR Detail Content ────
+function KPRDetailContent({
+  result,
+  rateType,
+}: {
+  result: KPRResult;
+  rateType: "flat" | "annuity";
+}) {
+  return (
+    <div>
+      {/* Header */}
+      <div className="header">
+        <h1>📄 Simulasi KPR Bank</h1>
+        <p>Tanggal: {todayStr()} &bull; Tipe: {rateType === "flat" ? "Bunga Flat" : "Bunga Anuitas (Efektif)"}</p>
+      </div>
+
+      {/* Ringkasan */}
+      <div className="section-title">A. Ringkasan Perhitungan</div>
+      <table>
+        <tbody>
+          <tr><td style={{ width: "50%" }}>Harga Properti</td><td className="right">Rp {formatRupiah(result.propertyPrice)}</td></tr>
+          <tr><td>Uang Muka (DP)</td><td className="right">Rp {formatRupiah(result.dpAmount)} ({result.dpPercent.toFixed(1)}%)</td></tr>
+          <tr><td>Jumlah Pinjaman</td><td className="right">Rp {formatRupiah(result.loanAmount)}</td></tr>
+          <tr><td>Suku Bunga Pertahun</td><td className="right">{result.annualRate}% ({rateType === "flat" ? "Flat" : "Anuitas"})</td></tr>
+          <tr><td>Jangka Waktu (Tenor)</td><td className="right">{result.tenorYears} Tahun ({result.tenorYears * 12} Bulan)</td></tr>
+        </tbody>
+      </table>
+
+      {/* Hasil */}
+      <div className="section-title">B. Hasil Perhitungan</div>
+      <div className="highlight-box" style={rateType === "flat" ? {} : { background: "#fef2f2", borderColor: "#fecaca" }}>
+        <div className="label">Cicilan Per Bulan</div>
+        <div className="amount">Rp {formatRupiah(result.monthly)}</div>
+        <div className="label">{rateType === "flat" ? "Bunga Flat — cicilan tetap setiap bulan" : "Bunga Anuitas — cicilan tetap, porsi bunga menurun"}</div>
+      </div>
+
+      <table>
+        <tbody>
+          <tr><td>Total Pembayaran</td><td className="right"><strong>Rp {formatRupiah(result.totalPayment)}</strong></td></tr>
+          <tr><td>Total Bunga</td><td className="right" style={{ color: "#dc2626" }}>Rp {formatRupiah(result.totalInterest)}</td></tr>
+          <tr><td>Total Pokok</td><td className="right">Rp {formatRupiah(result.loanAmount)}</td></tr>
+        </tbody>
+      </table>
+
+      {/* Tabel Cicilan Per Tahun */}
+      <div className="section-title">C. Tabel Cicilan Per Tahun</div>
+      <table>
+        <thead>
+          <tr>
+            <th className="center">Tahun</th>
+            <th className="right">Angsuran/bln</th>
+            <th className="right">Total Setahun</th>
+            <th className="right">Sisa Pinjaman</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: result.tenorYears }, (_, i) => {
+            const year = i + 1;
+            let yearlyPrincipal = 0;
+            let yearlyInterest = 0;
+            let remaining = result.loanAmount;
+            if (rateType === "annuity") {
+              for (let m = 0; m < result.tenorYears * 12; m++) {
+                const interestMonth = remaining * (result.annualRate / 100 / 12);
+                const principalMonth = result.monthly - interestMonth;
+                if (m >= (year - 1) * 12 && m < year * 12) {
+                  yearlyPrincipal += principalMonth;
+                  yearlyInterest += interestMonth;
+                }
+                remaining -= principalMonth;
+                if (remaining < 0) remaining = 0;
+              }
+            } else {
+              const totalMonths = result.tenorYears * 12;
+              const interestPerMonth = result.loanAmount * (result.annualRate / 100) / 12;
+              const principalPerMonth = result.loanAmount / totalMonths;
+              yearlyPrincipal = principalPerMonth * 12;
+              yearlyInterest = interestPerMonth * 12;
+              remaining = result.loanAmount - principalPerMonth * year * 12;
+              if (remaining < 0) remaining = 0;
+            }
+            return (
+              <tr key={year}>
+                <td className="center">{year}</td>
+                <td className="right">Rp {formatRupiah(result.monthly)}</td>
+                <td className="right">Rp {formatRupiah(result.monthly * 12)}</td>
+                <td className="right">Rp {formatRupiah(Math.max(0, remaining))}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      <div className="note">
+        * Simulasi ini hanya bersifat estimasi. Nilai cicilan aktual dapat berbeda tergantung kebijakan bank.
+        {rateType === "annuity" && " Untuk KPR Anuitas, cicilan tetap tapi porsi pokok meningkat dan bunga menurun setiap bulan."}
+      </div>
+    </div>
+  );
+}
+
+// ──── Syariah Detail Content ────
+function SyariahDetailContent({
+  result,
+}: {
+  result: SyariahResult;
+}) {
+  return (
+    <div>
+      {/* Header */}
+      <div className="header">
+        <h1>📄 Simulasi Pembiayaan Syariah</h1>
+        <p>Tanggal: {todayStr()} &bull; Akad Murabahah</p>
+      </div>
+
+      {/* Ringkasan */}
+      <div className="section-title">A. Ringkasan Perhitungan</div>
+      <table>
+        <tbody>
+          <tr><td style={{ width: "50%" }}>Harga Properti</td><td className="right">Rp {formatRupiah(result.propertyPrice)}</td></tr>
+          <tr><td>Uang Muka (DP)</td><td className="right">Rp {formatRupiah(result.dpAmount)} ({result.dpPercent.toFixed(1)}%)</td></tr>
+          <tr><td>Margin Keuntungan Bank</td><td className="right">{result.marginPercent}%</td></tr>
+          <tr><td>Harga Jual Bank (Akad)</td><td className="right"><strong>Rp {formatRupiah(result.sellingPrice)}</strong></td></tr>
+          <tr><td>Jumlah Pembiayaan</td><td className="right">Rp {formatRupiah(result.loanAmount)}</td></tr>
+          <tr><td>Jangka Waktu (Tenor)</td><td className="right">{result.tenorYears} Tahun ({result.tenorYears * 12} Bulan)</td></tr>
+        </tbody>
+      </table>
+
+      {/* Hasil */}
+      <div className="section-title">B. Hasil Perhitungan</div>
+      <div className="highlight-box" style={{ background: "#fffbeb", borderColor: "#fde68a" }}>
+        <div className="label">Cicilan Per Bulan (Flat)</div>
+        <div className="amount" style={{ color: "#b45309" }}>Rp {formatRupiah(result.monthly)}</div>
+        <div className="label">Cicilan tetap selama {result.tenorYears} tahun — tanpa bunga, tanpa denda</div>
+      </div>
+
+      <table>
+        <tbody>
+          <tr><td>Total Pembayaran ke Bank</td><td className="right"><strong>Rp {formatRupiah(result.totalPayment)}</strong></td></tr>
+          <tr><td>Margin Bank (Keuntungan)</td><td className="right" style={{ color: "#b45309" }}>Rp {formatRupiah(result.profitAmount)}</td></tr>
+          <tr><td>Porsi Pokok</td><td className="right">Rp {formatRupiah(result.propertyPrice - result.dpAmount)}</td></tr>
+        </tbody>
+      </table>
+
+      {/* Tabel Cicilan Per Tahun */}
+      <div className="section-title">C. Tabel Cicilan Per Tahun</div>
+      <table>
+        <thead>
+          <tr>
+            <th className="center">Tahun</th>
+            <th className="right">Cicilan/bln</th>
+            <th className="right">Total Setahun</th>
+            <th className="right">Sisa Pembiayaan</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: result.tenorYears }, (_, i) => {
+            const year = i + 1;
+            const remaining = Math.max(0, result.loanAmount - result.monthly * 12 * year);
+            return (
+              <tr key={year}>
+                <td className="center">{year}</td>
+                <td className="right">Rp {formatRupiah(result.monthly)}</td>
+                <td className="right">Rp {formatRupiah(result.monthly * 12)}</td>
+                <td className="right">Rp {formatRupiah(remaining)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      <div className="note">
+        * Simulasi ini hanya bersifat estimasi. Cicilan Syariah bersifat FLAT (tetap) selama masa tenor.
+        Tanpa bunga, tanpa denda, tanpa penalti. Sesuai prinsip Akad Murabahah.
+      </div>
+    </div>
+  );
+}
+
 // ──── KPR Calculator Component ────
 function KPRCalculator() {
   const [price, setPrice] = useState<string>("575000000");
@@ -83,6 +379,8 @@ function KPRCalculator() {
   const [rate, setRate] = useState<string>("8.5");
   const [rateType, setRateType] = useState<"flat" | "annuity">("annuity");
   const [copied, setCopied] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
 
   const result = useMemo(() => {
     const p = parseFloat(price) || 0;
@@ -276,12 +574,40 @@ function KPRCalculator() {
                 Rp {formatRupiah(result.monthly)}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowDetail(true)}
+                className="text-red-200 hover:text-white hover:bg-red-500/30"
+                title="Lihat Detail"
+              >
+                <Eye className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handlePrint(printRef)}
+                className="text-red-200 hover:text-white hover:bg-red-500/30"
+                title="Print"
+              >
+                <Printer className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => exportPDF(printRef, `simulasi-kpr-${Date.now()}.pdf`)}
+                className="text-red-200 hover:text-white hover:bg-red-500/30"
+                title="Download PDF"
+              >
+                <Download className="w-4 h-4" />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={copyResult}
                 className="text-red-200 hover:text-white hover:bg-red-500/30"
+                title="Salin"
               >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </Button>
@@ -290,6 +616,7 @@ function KPRCalculator() {
                 size="icon"
                 onClick={resetForm}
                 className="text-red-200 hover:text-white hover:bg-red-500/30"
+                title="Reset"
               >
                 <RotateCcw className="w-4 h-4" />
               </Button>
@@ -392,6 +719,139 @@ function KPRCalculator() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Hidden printable area for PDF */}
+      <div className="absolute left-[-9999px] top-0">
+        <div ref={printRef} style={{ width: "210mm", background: "#fff", padding: "10mm", fontFamily: "Arial, sans-serif", fontSize: "13px", color: "#111" }}>
+          <KPRDetailContent result={result} rateType={rateType} />
+        </div>
+      </div>
+
+      {/* Detail Dialog */}
+      {showDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowDetail(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Dialog Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-red-600" />
+                <h2 className="text-lg font-bold text-gray-900">Detail Simulasi KPR</h2>
+                <span className="text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded-full font-medium">{rateType === "flat" ? "Flat" : "Anuitas"}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => handlePrint(printRef)} className="gap-1.5">
+                  <Printer className="w-3.5 h-3.5" /> Print
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => exportPDF(printRef, `simulasi-kpr-${Date.now()}.pdf`)} className="gap-1.5">
+                  <Download className="w-3.5 h-3.5" /> PDF
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setShowDetail(false)}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Dialog Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {/* Highlight */}
+              <div className="text-center mb-6 p-6 bg-red-50 rounded-xl border border-red-100">
+                <p className="text-sm text-red-600 font-medium">Cicilan Per Bulan</p>
+                <p className="text-3xl font-extrabold text-red-700 mt-1">Rp {formatRupiah(result.monthly)}</p>
+                <p className="text-xs text-red-500 mt-1">{rateType === "flat" ? "Bunga Flat — tetap setiap bulan" : "Bunga Anuitas — tetap, porsi pokok meningkat"}</p>
+              </div>
+
+              {/* Detail Table */}
+              <div className="rounded-xl border border-gray-200 overflow-hidden mb-6">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500">Keterangan</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500">Nilai</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t border-gray-100">
+                      <td className="px-4 py-3 text-gray-700">Harga Properti</td>
+                      <td className="px-4 py-3 text-right font-semibold">Rp {formatRupiah(result.propertyPrice)}</td>
+                    </tr>
+                    <tr className="border-t border-gray-100">
+                      <td className="px-4 py-3 text-gray-700">Uang Muka (DP)</td>
+                      <td className="px-4 py-3 text-right font-semibold">Rp {formatRupiah(result.dpAmount)} <span className="text-gray-400 font-normal">({result.dpPercent.toFixed(1)}%)</span></td>
+                    </tr>
+                    <tr className="border-t border-gray-100">
+                      <td className="px-4 py-3 text-gray-700">Jumlah Pinjaman</td>
+                      <td className="px-4 py-3 text-right font-semibold">Rp {formatRupiah(result.loanAmount)}</td>
+                    </tr>
+                    <tr className="border-t border-gray-100">
+                      <td className="px-4 py-3 text-gray-700">Suku Bunga</td>
+                      <td className="px-4 py-3 text-right font-semibold">{result.annualRate}% <span className="text-gray-400 font-normal">({rateType === "flat" ? "Flat" : "Anuitas"})</span></td>
+                    </tr>
+                    <tr className="border-t border-gray-100">
+                      <td className="px-4 py-3 text-gray-700">Tenor</td>
+                      <td className="px-4 py-3 text-right font-semibold">{result.tenorYears} Tahun <span className="text-gray-400 font-normal">({result.tenorYears * 12} Bulan)</span></td>
+                    </tr>
+                    <tr className="border-t border-gray-100 bg-red-50">
+                      <td className="px-4 py-3 text-red-700 font-semibold">Total Pembayaran</td>
+                      <td className="px-4 py-3 text-right font-bold text-red-700">Rp {formatRupiah(result.totalPayment)}</td>
+                    </tr>
+                    <tr className="border-t border-gray-100 bg-red-50/50">
+                      <td className="px-4 py-3 text-red-600 font-medium">Total Bunga</td>
+                      <td className="px-4 py-3 text-right font-semibold text-red-600">Rp {formatRupiah(result.totalInterest)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Yearly Table */}
+              <h3 className="text-sm font-bold text-gray-700 mb-3">📋 Tabel Cicilan Per Tahun</h3>
+              <div className="overflow-x-auto rounded-xl border border-gray-200 mb-4">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-500">Tahun</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500">Cicilan/bln</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500">Total Setahun</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500">Sisa Pinjaman</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: result.tenorYears }, (_, i) => {
+                      const year = i + 1;
+                      let remaining = result.loanAmount;
+                      if (rateType === "annuity") {
+                        let rem = result.loanAmount;
+                        for (let m = 0; m < year * 12; m++) {
+                          const intMonth = rem * (result.annualRate / 100 / 12);
+                          const prinMonth = result.monthly - intMonth;
+                          rem -= prinMonth;
+                          if (rem < 0) rem = 0;
+                        }
+                        remaining = rem;
+                      } else {
+                        const totalMonths = result.tenorYears * 12;
+                        const principalPerMonth = result.loanAmount / totalMonths;
+                        remaining = Math.max(0, result.loanAmount - principalPerMonth * year * 12);
+                      }
+                      return (
+                        <tr key={year} className={`${year % 2 === 0 ? "bg-gray-50/50" : ""} border-t border-gray-100`}>
+                          <td className="px-4 py-2.5 text-center text-gray-600">{year}</td>
+                          <td className="px-4 py-2.5 text-right font-medium">Rp {formatRupiah(result.monthly)}</td>
+                          <td className="px-4 py-2.5 text-right text-gray-600">Rp {formatRupiah(result.monthly * 12)}</td>
+                          <td className="px-4 py-2.5 text-right text-gray-500">Rp {formatRupiah(remaining)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <p className="text-[11px] text-gray-400">
+                * Estimasi saja. Nilai aktual tergantung kebijakan bank. Untuk KPR Anuitas, porsi pokok meningkat & bunga menurun tiap bulan.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -403,6 +863,8 @@ function SyariahCalculator() {
   const [tenor, setTenor] = useState<string>("5");
   const [margin, setMargin] = useState<string>("15");
   const [copied, setCopied] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
 
   const result = useMemo(() => {
     const p = parseFloat(price) || 0;
@@ -572,12 +1034,40 @@ function SyariahCalculator() {
                 Rp {formatRupiah(result.monthly)}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowDetail(true)}
+                className="text-amber-200 hover:text-white hover:bg-amber-500/30"
+                title="Lihat Detail"
+              >
+                <Eye className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handlePrint(printRef)}
+                className="text-amber-200 hover:text-white hover:bg-amber-500/30"
+                title="Print"
+              >
+                <Printer className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => exportPDF(printRef, `simulasi-syariah-${Date.now()}.pdf`)}
+                className="text-amber-200 hover:text-white hover:bg-amber-500/30"
+                title="Download PDF"
+              >
+                <Download className="w-4 h-4" />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={copyResult}
                 className="text-amber-200 hover:text-white hover:bg-amber-500/30"
+                title="Salin"
               >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </Button>
@@ -586,6 +1076,7 @@ function SyariahCalculator() {
                 size="icon"
                 onClick={resetForm}
                 className="text-amber-200 hover:text-white hover:bg-amber-500/30"
+                title="Reset"
               >
                 <RotateCcw className="w-4 h-4" />
               </Button>
@@ -663,6 +1154,129 @@ function SyariahCalculator() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Hidden printable area for PDF */}
+      <div className="absolute left-[-9999px] top-0">
+        <div ref={printRef} style={{ width: "210mm", background: "#fff", padding: "10mm", fontFamily: "Arial, sans-serif", fontSize: "13px", color: "#111" }}>
+          <SyariahDetailContent result={result} />
+        </div>
+      </div>
+
+      {/* Detail Dialog */}
+      {showDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowDetail(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Dialog Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-amber-600" />
+                <h2 className="text-lg font-bold text-gray-900">Detail Simulasi Syariah</h2>
+                <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">Murabahah</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => handlePrint(printRef)} className="gap-1.5">
+                  <Printer className="w-3.5 h-3.5" /> Print
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => exportPDF(printRef, `simulasi-syariah-${Date.now()}.pdf`)} className="gap-1.5">
+                  <Download className="w-3.5 h-3.5" /> PDF
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setShowDetail(false)}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Dialog Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {/* Highlight */}
+              <div className="text-center mb-6 p-6 bg-amber-50 rounded-xl border border-amber-100">
+                <p className="text-sm text-amber-600 font-medium">Cicilan Per Bulan (Flat)</p>
+                <p className="text-3xl font-extrabold text-amber-700 mt-1">Rp {formatRupiah(result.monthly)}</p>
+                <p className="text-xs text-amber-500 mt-1">Tetap selama {result.tenorYears} tahun — tanpa bunga, tanpa denda</p>
+              </div>
+
+              {/* Detail Table */}
+              <div className="rounded-xl border border-gray-200 overflow-hidden mb-6">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500">Keterangan</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500">Nilai</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t border-gray-100">
+                      <td className="px-4 py-3 text-gray-700">Harga Properti</td>
+                      <td className="px-4 py-3 text-right font-semibold">Rp {formatRupiah(result.propertyPrice)}</td>
+                    </tr>
+                    <tr className="border-t border-gray-100">
+                      <td className="px-4 py-3 text-gray-700">Uang Muka (DP)</td>
+                      <td className="px-4 py-3 text-right font-semibold">Rp {formatRupiah(result.dpAmount)} <span className="text-gray-400 font-normal">({result.dpPercent.toFixed(1)}%)</span></td>
+                    </tr>
+                    <tr className="border-t border-gray-100">
+                      <td className="px-4 py-3 text-gray-700">Margin Bank</td>
+                      <td className="px-4 py-3 text-right font-semibold">{result.marginPercent}% <span className="text-gray-400 font-normal">(Rp {formatRupiah(result.profitAmount)})</span></td>
+                    </tr>
+                    <tr className="border-t border-gray-100">
+                      <td className="px-4 py-3 text-gray-700 font-medium">Harga Jual Bank (Akad)</td>
+                      <td className="px-4 py-3 text-right font-bold">Rp {formatRupiah(result.sellingPrice)}</td>
+                    </tr>
+                    <tr className="border-t border-gray-100">
+                      <td className="px-4 py-3 text-gray-700">Jumlah Pembiayaan</td>
+                      <td className="px-4 py-3 text-right font-semibold">Rp {formatRupiah(result.loanAmount)}</td>
+                    </tr>
+                    <tr className="border-t border-gray-100">
+                      <td className="px-4 py-3 text-gray-700">Tenor</td>
+                      <td className="px-4 py-3 text-right font-semibold">{result.tenorYears} Tahun <span className="text-gray-400 font-normal">({result.tenorYears * 12} Bulan)</span></td>
+                    </tr>
+                    <tr className="border-t border-gray-100 bg-amber-50">
+                      <td className="px-4 py-3 text-amber-700 font-semibold">Total Pembayaran</td>
+                      <td className="px-4 py-3 text-right font-bold text-amber-700">Rp {formatRupiah(result.totalPayment)}</td>
+                    </tr>
+                    <tr className="border-t border-gray-100 bg-amber-50/50">
+                      <td className="px-4 py-3 text-amber-600 font-medium">Margin Bank (Keuntungan)</td>
+                      <td className="px-4 py-3 text-right font-semibold text-amber-600">Rp {formatRupiah(result.profitAmount)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Yearly Table */}
+              <h3 className="text-sm font-bold text-gray-700 mb-3">📋 Tabel Cicilan Per Tahun</h3>
+              <div className="overflow-x-auto rounded-xl border border-gray-200 mb-4">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-500">Tahun</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500">Cicilan/bln</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500">Total Setahun</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500">Sisa Pembiayaan</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: result.tenorYears }, (_, i) => {
+                      const year = i + 1;
+                      const remaining = Math.max(0, result.loanAmount - result.monthly * 12 * year);
+                      return (
+                        <tr key={year} className={`${year % 2 === 0 ? "bg-gray-50/50" : ""} border-t border-gray-100`}>
+                          <td className="px-4 py-2.5 text-center text-gray-600">{year}</td>
+                          <td className="px-4 py-2.5 text-right font-medium">Rp {formatRupiah(result.monthly)}</td>
+                          <td className="px-4 py-2.5 text-right text-gray-600">Rp {formatRupiah(result.monthly * 12)}</td>
+                          <td className="px-4 py-2.5 text-right text-gray-500">Rp {formatRupiah(remaining)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <p className="text-[11px] text-gray-400">
+                * Estimasi saja. Cicilan Syariah bersifat FLAT selama masa tenor. Tanpa bunga, tanpa denda, tanpa penalti. Sesuai prinsip Akad Murabahah.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
