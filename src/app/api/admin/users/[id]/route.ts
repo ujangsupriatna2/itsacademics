@@ -1,20 +1,18 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthSession } from "@/lib/auth-helper";
 import { db } from "@/lib/db";
 import { hash } from "bcryptjs";
-import { isSuperadmin } from "@/lib/permissions";
 
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const user = await getAuthSession();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (!isSuperadmin((session.user as { role?: string })?.role)) {
+    if (user.role !== "superadmin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -27,6 +25,14 @@ export async function GET(
         email: true,
         role: true,
         avatar: true,
+        mitraId: true,
+        mitra: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
         createdAt: true,
         updatedAt: true,
       },
@@ -47,25 +53,24 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const user = await getAuthSession();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (!isSuperadmin((session.user as { role?: string })?.role)) {
+    if (user.role !== "superadmin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = await params;
     const body = await req.json();
-    const { name, email, password, role, avatar } = body;
+    const { name, email, password, role, avatar, mitraId } = body;
 
     const existing = await db.admin.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: "Admin not found" }, { status: 404 });
     }
 
-    const currentUserId = (session.user as { id?: string })?.id;
-    if (id === currentUserId && role && role !== existing.role) {
+    if (id === user.id && role && role !== existing.role) {
       return NextResponse.json({ error: "Tidak dapat mengubah role sendiri" }, { status: 400 });
     }
 
@@ -81,6 +86,7 @@ export async function PUT(
     if (email) updateData.email = email;
     if (role) updateData.role = role;
     if (avatar !== undefined) updateData.avatar = avatar;
+    if (mitraId !== undefined) updateData.mitraId = mitraId || null;
     if (password && password.trim()) {
       updateData.password = await hash(password, 12);
     }
@@ -94,6 +100,14 @@ export async function PUT(
         email: true,
         role: true,
         avatar: true,
+        mitraId: true,
+        mitra: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
         createdAt: true,
       },
     });
@@ -109,11 +123,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const user = await getAuthSession();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (!isSuperadmin((session.user as { role?: string })?.role)) {
+    if (user.role !== "superadmin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -123,8 +137,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Admin not found" }, { status: 404 });
     }
 
-    const currentUserId = (session.user as { id?: string })?.id;
-    if (id === currentUserId) {
+    if (id === user.id) {
       return NextResponse.json({ error: "Tidak dapat menghapus akun sendiri" }, { status: 400 });
     }
 

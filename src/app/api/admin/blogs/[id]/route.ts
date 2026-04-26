@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthSession, canAccessMitra } from "@/lib/auth-helper";
 import { db } from "@/lib/db";
 
 /** Clean Quill HTML: replace &nbsp; with normal spaces so text wraps properly */
@@ -15,8 +14,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const user = await getAuthSession();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -25,6 +24,10 @@ export async function GET(
 
     if (!blog) {
       return NextResponse.json({ error: "Blog not found" }, { status: 404 });
+    }
+
+    if (!canAccessMitra(user, blog.mitraId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     return NextResponse.json(blog);
@@ -38,8 +41,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const user = await getAuthSession();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -49,6 +52,10 @@ export async function PUT(
     const existing = await db.blogPost.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: "Blog not found" }, { status: 404 });
+    }
+
+    if (!canAccessMitra(user, existing.mitraId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     if (body.slug && body.slug !== existing.slug) {
@@ -88,8 +95,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const user = await getAuthSession();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -97,6 +104,10 @@ export async function DELETE(
     const existing = await db.blogPost.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: "Blog not found" }, { status: 404 });
+    }
+
+    if (!canAccessMitra(user, existing.mitraId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     await db.blogPost.delete({ where: { id } });

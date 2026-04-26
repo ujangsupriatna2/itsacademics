@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthSession } from "@/lib/auth-helper";
 import { db } from "@/lib/db";
 import { hash } from "bcryptjs";
-import { isSuperadmin } from "@/lib/permissions";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const user = await getAuthSession();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (!isSuperadmin((session.user as { role?: string })?.role)) {
+    if (user.role !== "superadmin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -22,6 +20,14 @@ export async function GET() {
         email: true,
         role: true,
         avatar: true,
+        mitraId: true,
+        mitra: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
         createdAt: true,
         updatedAt: true,
       },
@@ -36,16 +42,16 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const user = await getAuthSession();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (!isSuperadmin((session.user as { role?: string })?.role)) {
+    if (user.role !== "superadmin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await req.json();
-    const { name, email, password, role } = body;
+    const { name, email, password, role, mitraId } = body;
 
     if (!name || !email || !password) {
       return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });
@@ -69,6 +75,7 @@ export async function POST(req: Request) {
         email,
         password: hashedPassword,
         role: role || "admin",
+        mitraId: mitraId || null,
       },
       select: {
         id: true,
@@ -76,6 +83,14 @@ export async function POST(req: Request) {
         email: true,
         role: true,
         avatar: true,
+        mitraId: true,
+        mitra: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
         createdAt: true,
       },
     });

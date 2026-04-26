@@ -8,6 +8,33 @@ datasource db {
   url      = env("POSTGRES_URL")
 }
 
+model Mitra {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  subdomain   String   @unique
+  logo        String   @default("")
+  description String   @default("")
+  address     String   @default("")
+  phone       String   @default("")
+  email       String   @default("")
+  website     String   @default("")
+  primaryColor String  @default("#dc2626")
+  accentColor String   @default("#f59e0b")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  admins       Admin[]
+  properties   Property[]
+  blogPosts    BlogPost[]
+  testimonials Testimonial[]
+  galleryItems GalleryItem[]
+  banks        Bank[]
+  settings     Setting[]
+}
+
 model Admin {
   id        String   @id @default(cuid())
   name      String
@@ -15,8 +42,11 @@ model Admin {
   password  String
   role      String   @default("admin")
   avatar    String?
+  mitraId   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  mitra Mitra? @relation(fields: [mitraId], references: [id], onDelete: SetNull)
 }
 
 model Property {
@@ -46,8 +76,11 @@ model Property {
   kprTenorOptions  String   @default("[5,10,15,20,25]")
   kprInstallments  String   @default("{}")
   isFeatured       Boolean  @default(false)
+  mitraId          String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+
+  mitra Mitra? @relation(fields: [mitraId], references: [id], onDelete: SetNull)
 }
 
 model BlogPost {
@@ -62,8 +95,11 @@ model BlogPost {
   published Boolean  @default(false)
   readTime  String   @default("5 menit")
   views     Int      @default(0)
+  mitraId   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  mitra Mitra? @relation(fields: [mitraId], references: [id], onDelete: SetNull)
 }
 
 model Testimonial {
@@ -73,8 +109,11 @@ model Testimonial {
   text      String
   rating    Int      @default(5)
   featured  Boolean  @default(false)
+  mitraId   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  mitra Mitra? @relation(fields: [mitraId], references: [id], onDelete: SetNull)
 }
 
 model GalleryItem {
@@ -84,8 +123,11 @@ model GalleryItem {
   image       String
   description String   @default("")
   sortOrder   Int      @default(0)
+  mitraId     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  mitra Mitra? @relation(fields: [mitraId], references: [id], onDelete: SetNull)
 }
 
 model Bank {
@@ -95,16 +137,24 @@ model Bank {
   image       String   @default("")
   sortOrder   Int      @default(0)
   isActive    Boolean  @default(true)
+  mitraId     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  mitra Mitra? @relation(fields: [mitraId], references: [id], onDelete: SetNull)
 }
 
 model Setting {
   id        String   @id @default(cuid())
-  key       String   @unique
+  key       String
   value     String
   label     String   @default("")
   group     String   @default("general")
+  mitraId   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  mitra Mitra? @relation(fields: [mitraId], references: [id], onDelete: SetNull)
+
+  @@unique([key, mitraId])
 }

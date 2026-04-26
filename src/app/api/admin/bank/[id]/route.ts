@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthSession, canAccessMitra } from "@/lib/auth-helper";
 import { db } from "@/lib/db";
 
 export async function GET(
@@ -8,8 +7,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const user = await getAuthSession();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -18,6 +17,10 @@ export async function GET(
 
     if (!item) {
       return NextResponse.json({ error: "Bank tidak ditemukan" }, { status: 404 });
+    }
+
+    if (!canAccessMitra(user, item.mitraId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     return NextResponse.json(item);
@@ -31,8 +34,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const user = await getAuthSession();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -42,6 +45,10 @@ export async function PUT(
     const existing = await db.bank.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: "Bank tidak ditemukan" }, { status: 404 });
+    }
+
+    if (!canAccessMitra(user, existing.mitraId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const updateData: Record<string, unknown> = {};
@@ -68,8 +75,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const user = await getAuthSession();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -77,6 +84,10 @@ export async function DELETE(
     const existing = await db.bank.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: "Bank tidak ditemukan" }, { status: 404 });
+    }
+
+    if (!canAccessMitra(user, existing.mitraId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     await db.bank.delete({ where: { id } });

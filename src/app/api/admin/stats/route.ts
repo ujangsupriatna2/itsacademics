@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthSession, getMitraWhere } from "@/lib/auth-helper";
 import { db } from "@/lib/db";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const user = await getAuthSession();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const { searchParams } = new URL(req.url);
+    const mitraIdFilter = searchParams.get("mitraId") || undefined;
+    const mitraWhere = getMitraWhere(user, mitraIdFilter);
 
     const [
       totalProperties,
@@ -17,11 +20,11 @@ export async function GET() {
       totalBanks,
       totalGallery,
     ] = await Promise.all([
-      db.property.count(),
-      db.blogPost.count({ where: { published: true } }),
-      db.testimonial.count(),
-      db.bank.count({ where: { isActive: true } }),
-      db.galleryItem.count(),
+      db.property.count({ where: mitraWhere }),
+      db.blogPost.count({ where: { ...mitraWhere, published: true } }),
+      db.testimonial.count({ where: mitraWhere }),
+      db.bank.count({ where: { ...mitraWhere, isActive: true } }),
+      db.galleryItem.count({ where: mitraWhere }),
     ]);
 
     return NextResponse.json({

@@ -1,21 +1,21 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthSession, getMitraWhere } from "@/lib/auth-helper";
 import { db } from "@/lib/db";
 
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const user = await getAuthSession();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category") || "";
+    const mitraIdFilter = searchParams.get("mitraId") || undefined;
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "50");
 
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = { ...getMitraWhere(user, mitraIdFilter) };
     if (category) where.category = category;
 
     const [items, total] = await Promise.all([
@@ -36,8 +36,8 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const user = await getAuthSession();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -48,6 +48,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Title and image are required" }, { status: 400 });
     }
 
+    const mitraId = user.role === "superadmin" ? (body.mitraId || null) : user.mitraId;
+
     const item = await db.galleryItem.create({
       data: {
         title,
@@ -55,6 +57,7 @@ export async function POST(req: Request) {
         image,
         description: description || "",
         sortOrder: parseInt(sortOrder) || 0,
+        mitraId,
       },
     });
 

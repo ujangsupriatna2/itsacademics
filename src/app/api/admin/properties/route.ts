@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthSession, getMitraWhere } from "@/lib/auth-helper";
 import { db } from "@/lib/db";
 
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const user = await getAuthSession();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -14,10 +13,11 @@ export async function GET(req: Request) {
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
     const category = searchParams.get("category") || "";
+    const mitraIdFilter = searchParams.get("mitraId") || undefined;
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "50");
 
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = { ...getMitraWhere(user, mitraIdFilter) };
     if (search) {
       where.OR = [
         { name: { contains: search } },
@@ -46,8 +46,8 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const user = await getAuthSession();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -69,6 +69,8 @@ export async function POST(req: Request) {
     if (slugExists) {
       return NextResponse.json({ error: "Slug sudah digunakan" }, { status: 409 });
     }
+
+    const mitraId = user.role === "superadmin" ? (body.mitraId || null) : user.mitraId;
 
     const property = await db.property.create({
       data: {
@@ -97,6 +99,7 @@ export async function POST(req: Request) {
         kprTenorOptions: kprTenorOptions || "[5,10,15,20,25]",
         kprInstallments: kprInstallments || "{}",
         isFeatured: !!isFeatured,
+        mitraId,
       },
     });
 

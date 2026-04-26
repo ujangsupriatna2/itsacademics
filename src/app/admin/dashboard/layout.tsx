@@ -37,8 +37,9 @@ import { useSettingsStore } from "@/lib/settings-store";
 // ──── Navigation Config ────
 const NAV_ITEMS = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/admin/dashboard", superadminOnly: false },
+  { label: "Mitra", icon: Building2, href: "/admin/dashboard/mitra", superadminOnly: true },
   { label: "User", icon: Users, href: "/admin/dashboard/users", superadminOnly: true },
-  { label: "Proyek", icon: Building2, href: "/admin/dashboard/proyek", superadminOnly: false },
+  { label: "Proyek", icon: LayoutDashboard, href: "/admin/dashboard/proyek", superadminOnly: false },
   { label: "Blog", icon: FileText, href: "/admin/dashboard/blog", superadminOnly: false },
   { label: "Testimoni", icon: MessageSquare, href: "/admin/dashboard/testimoni", superadminOnly: false },
   { label: "Kalkulator", icon: Calculator, href: "/admin/dashboard/kalkulator", superadminOnly: false },
@@ -50,6 +51,7 @@ const NAV_ITEMS = [
 // ──── Breadcrumbs ────
 const BREADCRUMBS: Record<string, string> = {
   "/admin/dashboard": "Dashboard",
+  "/admin/dashboard/mitra": "Mitra",
   "/admin/dashboard/users": "User",
   "/admin/dashboard/proyek": "Proyek",
   "/admin/dashboard/blog": "Blog",
@@ -257,13 +259,20 @@ function Header() {
             {session?.user?.name && (
               <div className="hidden md:block text-left">
                 <p className="text-sm font-medium text-gray-700 leading-tight">{session.user.name}</p>
-                <span className={`inline-block mt-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-md leading-none ${
-                  isSuperadmin(role)
-                    ? "bg-red-100 text-red-700"
-                    : "bg-gray-100 text-gray-500"
-                }`}>
-                  {isSuperadmin(role) ? "Super Admin" : "Admin"}
-                </span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className={`inline-block px-1.5 py-0.5 text-[10px] font-semibold rounded-md leading-none ${
+                    isSuperadmin(role)
+                      ? "bg-red-100 text-red-700"
+                      : "bg-gray-100 text-gray-500"
+                  }`}>
+                    {isSuperadmin(role) ? "Super Admin" : "Admin"}
+                  </span>
+                  {(session.user as { mitraName?: string | null }).mitraName && (
+                    <span className="inline-block px-1.5 py-0.5 text-[10px] font-semibold rounded-md leading-none bg-amber-100 text-amber-700">
+                      {(session.user as { mitraName?: string | null }).mitraName}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
           </button>

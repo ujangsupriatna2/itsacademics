@@ -49,6 +49,8 @@ interface Admin {
   email: string;
   role: string;
   avatar?: string;
+  mitraId?: string | null;
+  mitraName?: string | null;
   createdAt: string;
 }
 
@@ -58,7 +60,7 @@ interface FormErrors {
   password?: string;
 }
 
-const emptyForm = { name: "", email: "", password: "", role: "admin" };
+const emptyForm = { name: "", email: "", password: "", role: "admin", mitraId: "" };
 const emptyErrors: FormErrors = {};
 
 export default function UsersPage() {
@@ -74,8 +76,21 @@ export default function UsersPage() {
   const [saving, setSaving] = useState(false);
   const [deletingLoading, setDeletingLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [mitraList, setMitraList] = useState<{id: string; name: string}[]>([]);
 
   const currentUserId = (session?.user as { id?: string })?.id;
+
+  const fetchMitraList = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/mitra?limit=100");
+      if (res.ok) {
+        const data = await res.json();
+        setMitraList(Array.isArray(data) ? data.map((m: {id: string; name: string}) => ({ id: m.id, name: m.name })) : []);
+      }
+    } catch {
+      // silently ignore mitra fetch errors
+    }
+  }, []);
 
   const fetchAdmins = useCallback(async () => {
     try {
@@ -92,7 +107,7 @@ export default function UsersPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchAdmins(); }, [fetchAdmins]);
+  useEffect(() => { fetchAdmins(); fetchMitraList(); }, [fetchAdmins, fetchMitraList]);
 
   const openCreate = () => {
     setEditing(null);
@@ -104,7 +119,7 @@ export default function UsersPage() {
 
   const openEdit = (admin: Admin) => {
     setEditing(admin);
-    setForm({ name: admin.name, email: admin.email, password: "", role: admin.role });
+    setForm({ name: admin.name, email: admin.email, password: "", role: admin.role, mitraId: admin.mitraId || "" });
     setErrors(emptyErrors);
     setShowPassword(false);
     setFormOpen(true);
@@ -145,7 +160,7 @@ export default function UsersPage() {
     try {
       const url = editing ? `/api/admin/users/${editing.id}` : "/api/admin/users";
       const method = editing ? "PUT" : "POST";
-      const body: Record<string, string> = { name: form.name.trim(), email: form.email.trim(), role: form.role };
+      const body: Record<string, string | null> = { name: form.name.trim(), email: form.email.trim(), role: form.role, mitraId: form.mitraId || null };
       if (form.password) body.password = form.password;
 
       const res = await fetch(url, {
@@ -220,6 +235,7 @@ export default function UsersPage() {
                   <TableHead className="w-[250px]">Nama</TableHead>
                   <TableHead className="w-[280px]">Email</TableHead>
                   <TableHead className="w-[130px]">Role</TableHead>
+                  <TableHead className="w-[150px]">Mitra</TableHead>
                   <TableHead className="w-[120px]">Bergabung</TableHead>
                   <TableHead className="text-right w-[100px]">Aksi</TableHead>
                 </TableRow>
@@ -231,6 +247,7 @@ export default function UsersPage() {
                         <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-40" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-24 rounded-full" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                         <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
                       </TableRow>
@@ -238,7 +255,7 @@ export default function UsersPage() {
                   : admins.length === 0
                   ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-12 text-gray-400">
+                        <TableCell colSpan={6} className="text-center py-12 text-gray-400">
                           <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                           <p className="font-medium">Belum ada user</p>
                           <p className="text-sm mt-1">Klik &quot;Tambah User&quot; untuk membuat akun baru</p>
@@ -254,6 +271,15 @@ export default function UsersPage() {
                             <Shield className="w-3 h-3 mr-1" />
                             {a.role === "superadmin" ? "Superadmin" : "Admin"}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {a.mitraName ? (
+                            <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-0">
+                              {a.mitraName}
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-400 text-sm">—</span>
+                          )}
                         </TableCell>
                         <TableCell className="text-gray-500 text-sm">{formatDate(a.createdAt)}</TableCell>
                         <TableCell className="text-right">
@@ -374,6 +400,23 @@ export default function UsersPage() {
                   <SelectItem value="superadmin">Super Admin</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Mitra */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Mitra</Label>
+              <Select value={form.mitraId || "none"} onValueChange={(v) => setForm({ ...form, mitraId: v === "none" ? "" : v })}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Pilih mitra..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Tanpa Mitra (Super Admin)</SelectItem>
+                  {mitraList.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-gray-400">Assign user ke mitra perumahan tertentu</p>
             </div>
           </div>
 
