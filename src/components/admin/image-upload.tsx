@@ -144,7 +144,7 @@ export default function ImageUpload({
                 </button>
               )}
               {idx === 0 && (
-                <span className="absolute bottom-1 left-1 bg-red-600 text-white text-[9px] px-1.5 py-0.5 rounded font-medium">
+                <span className="absolute bottom-1 left-1 bg-blue-700 text-white text-[9px] px-1.5 py-0.5 rounded font-medium">
                   Utama
                 </span>
               )}
@@ -157,7 +157,7 @@ export default function ImageUpload({
               className={cn(
                 "aspect-square rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all",
                 dragOver
-                  ? "border-red-400 bg-red-50"
+                  ? "border-blue-300 bg-blue-50"
                   : "border-gray-200 hover:border-gray-300 hover:bg-gray-50",
                 uploading && "pointer-events-none opacity-50"
               )}
@@ -179,7 +179,7 @@ export default function ImageUpload({
           className={cn(
             "relative border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 overflow-hidden",
             dragOver
-              ? "border-red-400 bg-red-50 scale-[1.01]"
+              ? "border-blue-300 bg-blue-50 scale-[1.01]"
               : "border-gray-200 hover:border-gray-300 hover:bg-gray-50",
             uploading && "pointer-events-none opacity-60"
           )}
@@ -187,7 +187,7 @@ export default function ImageUpload({
           <div className="flex flex-col items-center justify-center py-8 px-4">
             {uploading ? (
               <>
-                <Loader2 className="w-8 h-8 text-red-500 animate-spin mb-3" />
+                <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-3" />
                 <p className="text-sm text-gray-500 font-medium">
                   Mengkompres gambar (maks {maxSizeKB}KB)...
                 </p>
@@ -198,17 +198,17 @@ export default function ImageUpload({
                 <div
                   className={cn(
                     "w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors",
-                    dragOver ? "bg-red-100" : "bg-gray-100"
+                    dragOver ? "bg-blue-100" : "bg-gray-100"
                   )}
                 >
                   {dragOver ? (
-                    <Upload className="w-6 h-6 text-red-500" />
+                    <Upload className="w-6 h-6 text-blue-600" />
                   ) : (
                     <ImageIcon className="w-6 h-6 text-gray-400" />
                   )}
                 </div>
                 <p className="text-sm text-gray-600 font-medium">
-                  <span className="text-red-500">Klik untuk upload</span> atau drag & drop
+                  <span className="text-blue-600">Klik untuk upload</span> atau drag & drop
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
                   JPEG, PNG, WebP — Maks {maxImages} gambar — Auto kompres ke ≤{maxSizeKB}KB
@@ -219,7 +219,7 @@ export default function ImageUpload({
 
           {uploading && (
             <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 text-red-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
             </div>
           )}
         </div>
@@ -234,7 +234,7 @@ export default function ImageUpload({
       />
 
       {error && (
-        <div className="flex items-center gap-1.5 text-xs text-red-500">
+        <div className="flex items-center gap-1.5 text-xs text-blue-600">
           <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
           {error}
         </div>

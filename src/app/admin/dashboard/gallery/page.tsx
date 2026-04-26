@@ -187,7 +187,7 @@ export default function GalleryPage() {
           <h1 className="text-2xl font-bold text-gray-900">Gallery</h1>
           <p className="text-sm text-gray-500 mt-1">Kelola galeri foto</p>
         </div>
-        <Button onClick={openCreate} className="bg-red-600 hover:bg-red-700 text-white gap-2">
+        <Button onClick={openCreate} className="bg-blue-700 hover:bg-blue-800 text-white gap-2">
           <Plus className="w-4 h-4" /> Tambah Foto
         </Button>
       </div>
@@ -296,7 +296,7 @@ export default function GalleryPage() {
                             <Button variant="ghost" size="icon" onClick={() => openEdit(item)} className="text-gray-400 hover:text-blue-600">
                               <Pencil className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => openDelete(item)} className="text-gray-400 hover:text-red-600">
+                            <Button variant="ghost" size="icon" onClick={() => openDelete(item)} className="text-gray-400 hover:text-blue-700">
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
@@ -332,15 +332,15 @@ export default function GalleryPage() {
             )}
             <div className="space-y-2">
               <Label>
-                Judul <span className="text-red-500">*</span>
+                Judul <span className="text-blue-600">*</span>
               </Label>
               <Input
                 value={form.title}
                 onChange={(e) => { clearFieldError("title"); setForm({ ...form, title: e.target.value }); }}
-                className={errors.title ? "border-red-400 focus-visible:ring-red-400" : ""}
+                className={errors.title ? "border-blue-300 focus-visible:ring-blue-300" : ""}
               />
               {errors.title && (
-                <p className="text-xs text-red-500 flex items-center gap-1">
+                <p className="text-xs text-blue-600 flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" /> {errors.title}
                 </p>
               )}
@@ -372,7 +372,7 @@ export default function GalleryPage() {
                 maxImages={1}
               />
               {errors.image && (
-                <p className="text-xs text-red-500 flex items-center gap-1">
+                <p className="text-xs text-blue-600 flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" /> {errors.image}
                 </p>
               )}
@@ -384,7 +384,7 @@ export default function GalleryPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormOpen(false)}>Batal</Button>
-            <Button onClick={handleSave} disabled={saving} className="bg-red-600 hover:bg-red-700 text-white">
+            <Button onClick={handleSave} disabled={saving} className="bg-blue-700 hover:bg-blue-800 text-white">
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editing ? "Simpan" : "Tambah"}
             </Button>
@@ -403,7 +403,7 @@ export default function GalleryPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white">Hapus</AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete} className="bg-blue-700 hover:bg-blue-800 text-white">Hapus</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

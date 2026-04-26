@@ -19,7 +19,7 @@ const SETTINGS_GROUPS: { title: string; group: string; icon: React.ElementType; 
     group: "company",
     icon: Building2,
     fields: [
-      { key: "company_name", label: "Nama Perusahaan", placeholder: "Bandung Raya Residence" },
+      { key: "company_name", label: "Nama Perusahaan", placeholder: "ITS Academic" },
       { key: "total_units_sold", label: "Total Unit Terjual", placeholder: "500" },
       { key: "company_legal_name", label: "Nama PT / Badan Hukum", placeholder: "PT Bumi Sanggar Meubel" },
       { key: "logo_url", label: "Logo Perusahaan", type: "image" },
@@ -133,7 +133,7 @@ function ImageUploadField({ fieldKey, label, value, onChange }: {
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="w-full h-40 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-red-400 hover:text-red-500 transition-colors cursor-pointer disabled:opacity-50"
+          className="w-full h-40 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors cursor-pointer disabled:opacity-50"
         >
           {uploading ? (
             <Loader2 className="w-8 h-8 animate-spin" />
@@ -236,7 +236,7 @@ export default function PengaturanPage() {
           <h1 className="text-2xl font-bold text-gray-900">Pengaturan</h1>
           <p className="text-sm text-gray-500 mt-1">Konfigurasi website {settings.company_name || "Admin"}</p>
         </div>
-        <Button onClick={handleSave} disabled={saving} className="bg-red-600 hover:bg-red-700 text-white gap-2">
+        <Button onClick={handleSave} disabled={saving} className="bg-blue-700 hover:bg-blue-800 text-white gap-2">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Simpan Pengaturan
         </Button>
@@ -256,8 +256,8 @@ export default function PengaturanPage() {
             <Card key={group.group} className="border-0 shadow-sm">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
-                    <group.icon className="w-4 h-4 text-red-600" />
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <group.icon className="w-4 h-4 text-blue-700" />
                   </div>
                   {group.title}
                 </CardTitle>
@@ -284,7 +284,7 @@ export default function PengaturanPage() {
                             value={settings[field.key] || ""}
                             onChange={(e) => handleChange(field.key, e.target.value)}
                             rows={3}
-                            className={errors[field.key] ? "resize-none border-red-500 focus-visible:ring-red-500" : "resize-none"}
+                            className={errors[field.key] ? "resize-none border-blue-600 focus-visible:ring-blue-600" : "resize-none"}
                           />
                         ) : (
                           <Input
@@ -293,11 +293,11 @@ export default function PengaturanPage() {
                             value={settings[field.key] || ""}
                             onChange={(e) => handleChange(field.key, e.target.value)}
                             placeholder={field.placeholder || (field.type === "url" ? "https://..." : "")}
-                            className={errors[field.key] ? "border-red-500 focus-visible:ring-red-500" : ""}
+                            className={errors[field.key] ? "border-blue-600 focus-visible:ring-blue-600" : ""}
                           />
                         )}
                         {errors[field.key] && (
-                          <p className="flex items-center gap-1 text-sm text-red-500">
+                          <p className="flex items-center gap-1 text-sm text-blue-600">
                             <AlertCircle className="w-3.5 h-3.5" />
                             {errors[field.key]}
                           </p>

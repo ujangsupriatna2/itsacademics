@@ -93,7 +93,7 @@ interface MitraOption { id: string; name: string; }
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
   available: { label: "Tersedia", className: "bg-green-100 text-green-700" },
-  sold: { label: "Terjual", className: "bg-red-100 text-red-700" },
+  sold: { label: "Terjual", className: "bg-blue-100 text-blue-800" },
   reserved: { label: "Dipesan", className: "bg-amber-100 text-amber-700" },
 };
 
@@ -298,7 +298,7 @@ function InstallmentGridEditor({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-7 text-xs text-red-500 hover:text-red-700 hover:bg-red-50"
+          className="h-7 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50"
           onClick={clearAll}
         >
           Kosongkan
@@ -345,7 +345,7 @@ function InstallmentGridEditor({
                           }
                         }}
                         placeholder="—"
-                        className="w-full h-8 text-center text-sm border border-gray-200 rounded-md focus:border-red-400 focus:ring-1 focus:ring-red-400 focus:outline-none bg-white transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="w-full h-8 text-center text-sm border border-gray-200 rounded-md focus:border-blue-300 focus:ring-1 focus:ring-blue-300 focus:outline-none bg-white transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </td>
                   );
@@ -486,13 +486,13 @@ function TagInput({
         {list.map((v) => (
           <span
             key={v}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 text-red-700 text-xs font-medium border border-red-100"
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-800 text-xs font-medium border border-blue-100"
           >
             {v}{suffix || ""}
             <button
               type="button"
               onClick={() => removeTag(v)}
-              className="text-red-400 hover:text-red-700 transition-colors"
+              className="text-blue-300 hover:text-blue-800 transition-colors"
             >
               <X className="w-3 h-3" />
             </button>
@@ -687,7 +687,7 @@ export default function ProyekPage() {
           <h1 className="text-2xl font-bold text-gray-900">Proyek</h1>
           <p className="text-sm text-gray-500 mt-1">Kelola listing properti / proyek perumahan</p>
         </div>
-        <Button onClick={openCreate} className="bg-red-600 hover:bg-red-700 text-white gap-2">
+        <Button onClick={openCreate} className="bg-blue-700 hover:bg-blue-800 text-white gap-2">
           <Plus className="w-4 h-4" /> Tambah Proyek
         </Button>
       </div>
@@ -780,7 +780,7 @@ export default function ProyekPage() {
                               <div>
                                 <p className="font-medium text-sm">{p.name}</p>
                                 {p.tag && (
-                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 mt-0.5 bg-red-50 text-red-600">
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 mt-0.5 bg-blue-50 text-blue-700">
                                     {p.tag}
                                   </Badge>
                                 )}
@@ -799,10 +799,10 @@ export default function ProyekPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
-                              <Button variant="ghost" size="icon" onClick={() => openEdit(p)} className="text-gray-400 hover:text-red-600">
+                              <Button variant="ghost" size="icon" onClick={() => openEdit(p)} className="text-gray-400 hover:text-blue-700">
                                 <Pencil className="w-4 h-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" onClick={() => openDelete(p)} className="text-gray-400 hover:text-red-600">
+                              <Button variant="ghost" size="icon" onClick={() => openDelete(p)} className="text-gray-400 hover:text-blue-700">
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
@@ -840,15 +840,15 @@ export default function ProyekPage() {
             )}
             {/* ── Info Dasar ── */}
             <div className="space-y-2">
-              <Label className="flex items-center gap-0.5">Nama Proyek <span className="text-red-500">*</span></Label>
+              <Label className="flex items-center gap-0.5">Nama Proyek <span className="text-blue-600">*</span></Label>
               <Input
                 value={form.name}
                 onChange={(e) => updateField("name", e.target.value)}
                 placeholder="Cluster Kav R3 & R4"
-                className={hasError("name") ? "border-red-400 focus-visible:ring-red-400" : ""}
+                className={hasError("name") ? "border-blue-300 focus-visible:ring-blue-300" : ""}
               />
               {errors.name && (
-                <p className="text-xs text-red-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {errors.name}</p>
+                <p className="text-xs text-blue-600 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {errors.name}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -856,21 +856,21 @@ export default function ProyekPage() {
               <Input value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })} placeholder="Best Seller, Populer, Baru..." />
             </div>
             <div className="space-y-2">
-              <Label className="flex items-center gap-0.5">Tipe (LB/LT) <span className="text-red-500">*</span></Label>
+              <Label className="flex items-center gap-0.5">Tipe (LB/LT) <span className="text-blue-600">*</span></Label>
               <Input
                 value={form.type}
                 onChange={(e) => updateField("type", e.target.value)}
                 placeholder="45/127"
-                className={hasError("type") ? "border-red-400 focus-visible:ring-red-400" : ""}
+                className={hasError("type") ? "border-blue-300 focus-visible:ring-blue-300" : ""}
               />
               {errors.type && (
-                <p className="text-xs text-red-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {errors.type}</p>
+                <p className="text-xs text-blue-600 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {errors.type}</p>
               )}
             </div>
             <div className="space-y-2">
-              <Label className="flex items-center gap-0.5">Kategori <span className="text-red-500">*</span></Label>
+              <Label className="flex items-center gap-0.5">Kategori <span className="text-blue-600">*</span></Label>
               <Select value={form.category} onValueChange={(v) => updateField("category", v)}>
-                <SelectTrigger className={hasError("category") ? "border-red-400 focus:ring-red-400" : ""}>
+                <SelectTrigger className={hasError("category") ? "border-blue-300 focus:ring-blue-300" : ""}>
                   <SelectValue placeholder="Pilih kategori" />
                 </SelectTrigger>
                 <SelectContent>
@@ -880,26 +880,26 @@ export default function ProyekPage() {
                 </SelectContent>
               </Select>
               {errors.category && (
-                <p className="text-xs text-red-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {errors.category}</p>
+                <p className="text-xs text-blue-600 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {errors.category}</p>
               )}
             </div>
             <div className="space-y-2">
-              <Label className="flex items-center gap-0.5">Harga (Juta Rp) <span className="text-red-500">*</span></Label>
+              <Label className="flex items-center gap-0.5">Harga (Juta Rp) <span className="text-blue-600">*</span></Label>
               <Input
                 type="number"
                 step="0.1"
                 value={form.price}
                 onChange={(e) => updateField("price", e.target.value)}
                 placeholder="575"
-                className={hasError("price") ? "border-red-400 focus-visible:ring-red-400" : ""}
+                className={hasError("price") ? "border-blue-300 focus-visible:ring-blue-300" : ""}
               />
               {errors.price && (
-                <p className="text-xs text-red-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {errors.price}</p>
+                <p className="text-xs text-blue-600 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {errors.price}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label>Lokasi</Label>
-              <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Bandung Raya Residence, Sentul, dll" />
+              <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="ITS Academic, Sentul, dll" />
             </div>
             <div className="space-y-2">
               <Label>Luas Tanah (m²)</Label>
@@ -967,8 +967,8 @@ export default function ProyekPage() {
                   const label = type === "syariah" ? "Syariah" : "KPR Bank";
                   const color = type === "syariah"
                     ? isActive ? "bg-amber-100 border-amber-300 text-amber-700" : "bg-gray-50 border-gray-200 text-gray-400"
-                    : isActive ? "bg-red-100 border-red-300 text-red-700" : "bg-gray-50 border-gray-200 text-gray-400";
-                  const dotColor = type === "syariah" ? "bg-amber-500" : "bg-red-500";
+                    : isActive ? "bg-blue-100 border-blue-300 text-blue-800" : "bg-gray-50 border-gray-200 text-gray-400";
+                  const dotColor = type === "syariah" ? "bg-amber-500" : "bg-blue-600";
                   return (
                     <button
                       key={type}
@@ -1056,7 +1056,7 @@ export default function ProyekPage() {
                         Syariah
                       </TabsTrigger>
                       <TabsTrigger value="kpr" className="gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-red-500" />
+                        <span className="w-2 h-2 rounded-full bg-blue-600" />
                         KPR Bank
                       </TabsTrigger>
                     </TabsList>
@@ -1106,7 +1106,7 @@ export default function ProyekPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormOpen(false)}>Batal</Button>
-            <Button onClick={handleSave} disabled={saving} className="bg-red-600 hover:bg-red-700 text-white">
+            <Button onClick={handleSave} disabled={saving} className="bg-blue-700 hover:bg-blue-800 text-white">
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editing ? "Simpan" : "Tambah"}
             </Button>
@@ -1125,7 +1125,7 @@ export default function ProyekPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={deletingLoading} className="bg-red-600 hover:bg-red-700 text-white">
+            <AlertDialogAction onClick={handleDelete} disabled={deletingLoading} className="bg-blue-700 hover:bg-blue-800 text-white">
               {deletingLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Hapus
             </AlertDialogAction>

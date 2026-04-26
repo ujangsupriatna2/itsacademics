@@ -198,7 +198,7 @@ export default function BlogPage() {
           <h1 className="text-2xl font-bold text-gray-900">Blog</h1>
           <p className="text-sm text-gray-500 mt-1">Kelola artikel blog</p>
         </div>
-        <Button onClick={openCreate} className="bg-red-600 hover:bg-red-700 text-white gap-2">
+        <Button onClick={openCreate} className="bg-blue-700 hover:bg-blue-800 text-white gap-2">
           <Plus className="w-4 h-4" /> Tambah Artikel
         </Button>
       </div>
@@ -293,7 +293,7 @@ export default function BlogPage() {
                             <Button variant="ghost" size="icon" onClick={() => openEdit(b)} className="text-gray-400 hover:text-blue-600">
                               <Pencil className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => openDelete(b)} className="text-gray-400 hover:text-red-600">
+                            <Button variant="ghost" size="icon" onClick={() => openDelete(b)} className="text-gray-400 hover:text-blue-700">
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
@@ -329,7 +329,7 @@ export default function BlogPage() {
             )}
             <div className="space-y-2">
               <Label>
-                Judul <span className="text-red-500">*</span>
+                Judul <span className="text-blue-600">*</span>
               </Label>
               <Input
                 value={form.title}
@@ -337,10 +337,10 @@ export default function BlogPage() {
                   setForm({ ...form, title: e.target.value, slug: generateSlug(e.target.value) });
                   clearFieldError("title");
                 }}
-                className={errors.title ? "border-red-400 focus-visible:ring-red-400" : ""}
+                className={errors.title ? "border-blue-300 focus-visible:ring-blue-300" : ""}
               />
               {errors.title && (
-                <p className="text-xs text-red-500 flex items-center gap-1">
+                <p className="text-xs text-blue-600 flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" /> {errors.title}
                 </p>
               )}
@@ -352,13 +352,13 @@ export default function BlogPage() {
               </div>
               <div className="space-y-2">
                 <Label>
-                  Kategori <span className="text-red-500">*</span>
+                  Kategori <span className="text-blue-600">*</span>
                 </Label>
                 <Select value={form.category} onValueChange={(v) => {
                   setForm({ ...form, category: v });
                   clearFieldError("category");
                 }}>
-                  <SelectTrigger className={errors.category ? "border-red-400 focus-visible:ring-red-400" : ""}>
+                  <SelectTrigger className={errors.category ? "border-blue-300 focus-visible:ring-blue-300" : ""}>
                     <SelectValue placeholder="Pilih kategori" />
                   </SelectTrigger>
                   <SelectContent>
@@ -371,7 +371,7 @@ export default function BlogPage() {
                   </SelectContent>
                 </Select>
                 {errors.category && (
-                  <p className="text-xs text-red-500 flex items-center gap-1">
+                  <p className="text-xs text-blue-600 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" /> {errors.category}
                   </p>
                 )}
@@ -410,7 +410,7 @@ export default function BlogPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormOpen(false)}>Batal</Button>
-            <Button onClick={handleSave} disabled={saving} className="bg-red-600 hover:bg-red-700 text-white">
+            <Button onClick={handleSave} disabled={saving} className="bg-blue-700 hover:bg-blue-800 text-white">
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editing ? "Simpan" : "Tambah"}
             </Button>
@@ -429,7 +429,7 @@ export default function BlogPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white">Hapus</AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete} className="bg-blue-700 hover:bg-blue-800 text-white">Hapus</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

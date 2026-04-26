@@ -169,7 +169,7 @@ export default function MitraPage() {
           <h1 className="text-2xl font-bold text-gray-900">Mitra Perumahan</h1>
           <p className="text-sm text-gray-500 mt-1">Kelola mitra yang terdaftar di platform</p>
         </div>
-        <Button onClick={openCreate} className="bg-red-600 hover:bg-red-700 text-white">
+        <Button onClick={openCreate} className="bg-blue-700 hover:bg-blue-800 text-white">
           <Plus className="w-4 h-4 mr-2" /> Tambah Mitra
         </Button>
       </div>
@@ -252,7 +252,7 @@ export default function MitraPage() {
                   <Button variant="outline" size="sm" onClick={() => toggleActive(m)} className="flex-1">
                     {m.isActive ? <><EyeOff className="w-3.5 h-3.5 mr-1" /> Nonaktif</> : <><Eye className="w-3.5 h-3.5 mr-1" /> Aktif</>}
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDelete(m.id)} disabled={deleting === m.id} className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                  <Button variant="outline" size="sm" onClick={() => handleDelete(m.id)} disabled={deleting === m.id} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
@@ -282,7 +282,7 @@ export default function MitraPage() {
                 <Label>Nama Perumahan *</Label>
                 <Input value={form.name} onChange={(e) => {
                   setForm({ ...form, name: e.target.value, slug: slugify(e.target.value) });
-                }} placeholder="Bandung Raya Residence" />
+                }} placeholder="ITS Academic" />
               </div>
               <div className="space-y-2">
                 <Label>Subdomain *</Label>
@@ -347,7 +347,7 @@ export default function MitraPage() {
             {/* Save */}
             <div className="flex justify-end gap-2 pt-4">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
-              <Button onClick={handleSave} disabled={saving || !form.name || !form.slug || !form.subdomain} className="bg-red-600 hover:bg-red-700 text-white">
+              <Button onClick={handleSave} disabled={saving || !form.name || !form.slug || !form.subdomain} className="bg-blue-700 hover:bg-blue-800 text-white">
                 {saving ? "Menyimpan..." : editingId ? "Update Mitra" : "Buat Mitra"}
               </Button>
             </div>

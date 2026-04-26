@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import NextAuthProvider from "@/components/next-auth-provider";
 import { db } from "@/lib/db";
 
-const DEFAULT_COMPANY = "Bandung Raya Residence";
+const DEFAULT_COMPANY = "ITS Academic";
 
 export async function generateMetadata(): Promise<Metadata> {
   let companyName = DEFAULT_COMPANY;
