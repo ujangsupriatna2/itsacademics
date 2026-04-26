@@ -61,3 +61,25 @@ Stage Summary:
 - Large numbers break/wrap at any character instead of expanding cards
 - Mobile font size starts at text-2xl instead of text-3xl
 - Both usages of CalculatorSection (main page and proyek page) benefit from the fix
+
+---
+Task ID: 3
+Agent: Main
+Task: Remove PDF download button from admin calculator (KPR & Syariah)
+
+Work Log:
+- User reported PDF download output was broken/ugly and requested removal of the PDF icon
+- Removed `import jsPDF from "jspdf"` 
+- Removed `Download` icon from lucide-react imports
+- Removed entire `exportPDF` function (~30 lines)
+- Removed PDF download button from 4 locations:
+  1. KPR result card action buttons
+  2. KPR detail dialog header buttons
+  3. Syariah result card action buttons
+  4. Syariah detail dialog header buttons
+- Print functionality (using browser print dialog) is retained as the only export option
+
+Stage Summary:
+- PDF download feature completely removed from both KPR and Syariah calculators
+- Print button remains functional — users can save as PDF via browser's "Save as PDF" printer option
+- No lint errors introduced

@@ -14,7 +14,6 @@ import {
   Info,
   FileText,
   Printer,
-  Download,
   Eye,
   X,
   Shield,
@@ -32,7 +31,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import jsPDF from "jspdf";
 
 // ──── Helpers ────
 function formatRupiah(amount: number): string {
@@ -210,37 +208,6 @@ function generateSyariahHtml(result: SyariahResult): string {
     </table>
     <div class="note">* Simulasi ini hanya bersifat estimasi. Cicilan Syariah bersifat FLAT (tetap) selama masa tenor. Tanpa bunga, tanpa denda, tanpa penalti. Sesuai prinsip Akad Murabahah.</div>
   `;
-}
-
-// ──── PDF / Print helpers ────
-async function exportPDF(htmlContent: string, filename: string) {
-  toast.loading("Membuat PDF...");
-  try {
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "fixed";
-    iframe.style.left = "-9999px";
-    iframe.style.width = "210mm";
-    iframe.style.height = "297mm";
-    document.body.appendChild(iframe);
-    const doc = iframe.contentDocument!;
-    doc.open();
-    doc.write(wrapPrintHtml(htmlContent));
-    doc.close();
-    await new Promise((r) => setTimeout(r, 600));
-    const pdf = new jsPDF("p", "mm", "a4");
-    pdf.html(doc.body, {
-      callback: () => {
-        pdf.save(filename);
-        document.body.removeChild(iframe);
-        toast.dismiss();
-        toast.success("PDF berhasil diunduh!");
-      },
-      x: 0, y: 0, width: 210, windowWidth: 210 * 3.78,
-    });
-  } catch {
-    toast.dismiss();
-    toast.error("Gagal membuat PDF. Coba gunakan Print.");
-  }
 }
 
 function handlePrint(htmlContent: string) {
@@ -510,15 +477,6 @@ function KPRCalculator() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => exportPDF(printHtml, `simulasi-kpr-${Date.now()}.pdf`)}
-                className="text-red-200 hover:text-white hover:bg-red-500/30"
-                title="Download PDF"
-              >
-                <Download className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
                 onClick={copyResult}
                 className="text-red-200 hover:text-white hover:bg-red-500/30"
                 title="Salin"
@@ -648,9 +606,6 @@ function KPRCalculator() {
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => handlePrint(printHtml)} className="gap-1.5">
                   <Printer className="w-3.5 h-3.5" /> Print
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => exportPDF(printHtml, `simulasi-kpr-${Date.now()}.pdf`)} className="gap-1.5">
-                  <Download className="w-3.5 h-3.5" /> PDF
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => setShowDetail(false)}>
                   <X className="w-4 h-4" />
@@ -964,15 +919,6 @@ function SyariahCalculator() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => exportPDF(printHtml, `simulasi-syariah-${Date.now()}.pdf`)}
-                className="text-amber-200 hover:text-white hover:bg-amber-500/30"
-                title="Download PDF"
-              >
-                <Download className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
                 onClick={copyResult}
                 className="text-amber-200 hover:text-white hover:bg-amber-500/30"
                 title="Salin"
@@ -1077,9 +1023,6 @@ function SyariahCalculator() {
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => handlePrint(printHtml)} className="gap-1.5">
                   <Printer className="w-3.5 h-3.5" /> Print
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => exportPDF(printHtml, `simulasi-syariah-${Date.now()}.pdf`)} className="gap-1.5">
-                  <Download className="w-3.5 h-3.5" /> PDF
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => setShowDetail(false)}>
                   <X className="w-4 h-4" />
