@@ -2277,7 +2277,7 @@ function CalculatorSection() {
                   <p className="text-red-200 text-sm uppercase tracking-wider mb-2">
                     Cicilan Bulanan
                   </p>
-                  <p className="text-3xl sm:text-4xl md:text-5xl font-extrabold break-all sm:break-normal">
+                  <p className="text-2xl sm:text-3xl md:text-5xl font-extrabold">
                     Rp {formatRp(monthly * 1_000_000)}
                   </p>
                   <p className="text-red-200 text-sm mt-2">
@@ -2290,37 +2290,18 @@ function CalculatorSection() {
 
                 <Separator className="bg-white/20 mb-6" />
 
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-red-200 text-sm">Harga Rumah</span>
-                    <span className="font-bold">
-                      Rp {prop ? formatRp(prop.price * 1_000_000) : "0"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-red-200 text-sm">
-                      Uang Muka ({dp}%)
-                    </span>
-                    <span className="font-bold">
-                      Rp {formatRp(dpAmount * 1_000_000)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-red-200 text-sm">
-                      Sisa Pembayaran
-                    </span>
-                    <span className="font-bold">
-                      Rp {formatRp(remaining * 1_000_000)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-red-200 text-sm">
-                      Tenor ({tenor} tahun)
-                    </span>
-                    <span className="font-bold">
-                      {tenorNum * 12} bulan
-                    </span>
-                  </div>
+                <div className="space-y-3">
+                  {[
+                    { label: "Harga Rumah", value: `Rp ${prop ? formatRp(prop.price * 1_000_000) : "0"}` },
+                    { label: `Uang Muka (${dp}%)`, value: `Rp ${formatRp(dpAmount * 1_000_000)}` },
+                    { label: "Sisa Pembayaran", value: `Rp ${formatRp(remaining * 1_000_000)}` },
+                    { label: `Tenor (${tenor} tahun)`, value: `${tenorNum * 12} bulan` },
+                  ].map((row) => (
+                    <div key={row.label} className="flex justify-between items-center gap-2 min-w-0">
+                      <span className="text-red-200 text-xs sm:text-sm whitespace-nowrap">{row.label}</span>
+                      <span className="font-bold text-sm sm:text-base text-right truncate">{row.value}</span>
+                    </div>
+                  ))}
                 </div>
 
                 <Separator className="bg-white/20 my-6" />
