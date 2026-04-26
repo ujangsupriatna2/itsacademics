@@ -3249,7 +3249,7 @@ function BlogArticlePage({ slug }: { slug: string }) {
 
           {/* Rich HTML content */}
           <div
-            className="prose prose-sm md:prose-base max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-red-600 prose-img:rounded-xl prose-blockquote:border-l-red-500 prose-blockquote:text-gray-500 prose-blockquote:italic prose-li:text-gray-700"
+            className="prose prose-sm md:prose-base max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-red-600 prose-img:rounded-xl prose-blockquote:border-l-red-500 prose-blockquote:text-gray-500 prose-blockquote:italic prose-li:text-gray-700 prose-pre:max-w-full prose-video:max-w-full prose-iframe:max-w-full [&_img]:max-w-full [&_img]:h-auto [&_video]:max-w-full [&_iframe]:max-w-full [&_table]:table-fixed [&_td]:break-words [&_th]:break-words [&_p]:break-words"
             dangerouslySetInnerHTML={{ __html: article.content || "<p class='text-gray-400'>Konten belum tersedia.</p>" }}
           />
 
