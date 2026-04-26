@@ -153,6 +153,20 @@ main {
   max-width: 100%;
 }
 
+/* Force all rich content to wrap and not overflow */
+.prose,
+.prose * {
+  max-width: 100% !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  white-space: normal !important;
+}
+.prose img,
+.prose video,
+.prose iframe {
+  height: auto !important;
+}
+
 /* Animation utilities */
 @keyframes fade-in-up {
   from {
