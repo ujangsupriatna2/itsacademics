@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import {
   Calculator,
   Building2,
-  Percent,
   Clock,
   Banknote,
   TrendingDown,
@@ -12,7 +11,6 @@ import {
   Copy,
   Check,
   RotateCcw,
-  ArrowRight,
   Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,8 +18,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -66,14 +62,13 @@ function calcKPRMonthlyAnnuity(
   );
 }
 
-// Syariah: flat profit margin
+// Syariah: flat profit margin — dpAmount is in rupiah
 function calcSyariahMonthly(
   propertyPrice: number,
-  dpPercent: number,
+  dpAmount: number,
   profitMarginPercent: number,
   tenorYears: number
 ): number {
-  const dpAmount = propertyPrice * (dpPercent / 100);
   const sellingPrice = propertyPrice * (1 + profitMarginPercent / 100);
   const loanAmount = sellingPrice - dpAmount;
   const totalMonths = tenorYears * 12;
@@ -83,7 +78,7 @@ function calcSyariahMonthly(
 // ──── KPR Calculator Component ────
 function KPRCalculator() {
   const [price, setPrice] = useState<string>("575000000");
-  const [dpPercent, setDpPercent] = useState<string>("20");
+  const [dpAmount, setDpAmount] = useState<string>("115000000");
   const [tenor, setTenor] = useState<string>("10");
   const [rate, setRate] = useState<string>("8.5");
   const [rateType, setRateType] = useState<"flat" | "annuity">("annuity");
@@ -91,12 +86,11 @@ function KPRCalculator() {
 
   const result = useMemo(() => {
     const p = parseFloat(price) || 0;
-    const dp = parseFloat(dpPercent) || 0;
+    const dp = parseFloat(dpAmount) || 0;
     const t = parseFloat(tenor) || 1;
     const r = parseFloat(rate) || 0;
 
-    const dpAmount = p * (dp / 100);
-    const loanAmount = p - dpAmount;
+    const loanAmount = p - dp;
     const monthly =
       rateType === "flat"
         ? calcKPRMonthlyFlat(loanAmount, r, t)
@@ -104,11 +98,12 @@ function KPRCalculator() {
 
     const totalPayment = monthly * t * 12;
     const totalInterest = totalPayment - loanAmount;
+    const dpPercentVal = p > 0 ? ((dp / p) * 100) : 0;
 
     return {
       propertyPrice: p,
-      dpAmount,
-      dpPercent: dp,
+      dpAmount: dp,
+      dpPercent: dpPercentVal,
       loanAmount,
       monthly,
       tenorYears: t,
@@ -116,10 +111,10 @@ function KPRCalculator() {
       totalInterest,
       annualRate: r,
     };
-  }, [price, dpPercent, tenor, rate, rateType]);
+  }, [price, dpAmount, tenor, rate, rateType]);
 
   const copyResult = () => {
-    const text = `KPR ${rateType.toUpperCase()} — ${formatJuta(result.propertyPrice)}jt, DP ${result.dpPercent}% (${formatRupiah(result.dpAmount)}), ${result.tenorYears}thn @${result.annualRate}% → Cicilan: Rp ${formatRupiah(result.monthly)}/bln`;
+    const text = `KPR ${rateType.toUpperCase()} — ${formatJuta(result.propertyPrice)}jt, DP Rp ${formatRupiah(result.dpAmount)} (${result.dpPercent.toFixed(1)}%), ${result.tenorYears}thn @${result.annualRate}% → Cicilan: Rp ${formatRupiah(result.monthly)}/bln`;
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
       toast.success("Disalin ke clipboard!");
@@ -129,7 +124,7 @@ function KPRCalculator() {
 
   const resetForm = () => {
     setPrice("575000000");
-    setDpPercent("20");
+    setDpAmount("115000000");
     setTenor("10");
     setRate("8.5");
     setRateType("annuity");
@@ -166,20 +161,18 @@ function KPRCalculator() {
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5 text-sm font-medium">
-                <Percent className="w-3.5 h-3.5 text-gray-400" />
-                Uang Muka (DP)
+                <Banknote className="w-3.5 h-3.5 text-gray-400" />
+                Uang Muka (DP) — Rupiah
               </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  value={dpPercent}
-                  onChange={(e) => setDpPercent(e.target.value)}
-                  className="text-lg font-semibold"
-                />
-                <span className="text-gray-400 font-medium">%</span>
-              </div>
+              <Input
+                type="number"
+                value={dpAmount}
+                onChange={(e) => setDpAmount(e.target.value)}
+                className="text-lg font-semibold"
+                placeholder="Contoh: 115000000"
+              />
               <p className="text-xs text-gray-400">
-                Rp {formatRupiah(result.dpAmount)} ({formatJuta(result.dpAmount)} jt)
+                Rp {formatRupiah(parseFloat(dpAmount) || 0)} ({formatJuta(parseFloat(dpAmount) || 0)} jt) ≈ {result.dpPercent.toFixed(1)}% dari harga
               </p>
             </div>
             <div className="space-y-2">
@@ -310,7 +303,7 @@ function KPRCalculator() {
             </div>
             <div className="bg-white/10 rounded-xl p-3">
               <p className="text-red-200 text-[11px]">Uang Muka</p>
-              <p className="text-sm font-semibold mt-0.5">{result.dpPercent}% ({formatJuta(result.dpAmount)} jt)</p>
+              <p className="text-sm font-semibold mt-0.5">{result.dpPercent.toFixed(1)}% ({formatJuta(result.dpAmount)} jt)</p>
             </div>
             <div className="bg-white/10 rounded-xl p-3">
               <p className="text-red-200 text-[11px]">Jumlah Pinjaman</p>
@@ -336,7 +329,7 @@ function KPRCalculator() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <TrendingDown className="w-4 h-4 text-gray-400" />
-            Perbandingan Cepat — Sama-sama DP {dpPercent}%
+            Perbandingan Cepat — DP Rp {formatRupiah(parseFloat(dpAmount) || 0)}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -356,10 +349,10 @@ function KPRCalculator() {
                 <tr className="border-t border-gray-100">
                   <td className="px-4 py-3 font-medium text-gray-700 text-xs">Cicilan/bln</td>
                   {[5, 10, 15, 20, 25].map((t) => {
-                    const dp = parseFloat(dpPercent) || 0;
+                    const dp = parseFloat(dpAmount) || 0;
                     const p = parseFloat(price) || 0;
                     const r = parseFloat(rate) || 0;
-                    const loan = p - p * (dp / 100);
+                    const loan = p - dp;
                     const monthly =
                       rateType === "flat"
                         ? calcKPRMonthlyFlat(loan, r, t)
@@ -374,10 +367,10 @@ function KPRCalculator() {
                 <tr className="border-t border-gray-100 bg-gray-50/50">
                   <td className="px-4 py-2.5 font-medium text-gray-500 text-xs">Total bunga</td>
                   {[5, 10, 15, 20, 25].map((t) => {
-                    const dp = parseFloat(dpPercent) || 0;
+                    const dp = parseFloat(dpAmount) || 0;
                     const p = parseFloat(price) || 0;
                     const r = parseFloat(rate) || 0;
-                    const loan = p - p * (dp / 100);
+                    const loan = p - dp;
                     const monthly =
                       rateType === "flat"
                         ? calcKPRMonthlyFlat(loan, r, t)
@@ -406,28 +399,28 @@ function KPRCalculator() {
 // ──── Syariah Calculator Component ────
 function SyariahCalculator() {
   const [price, setPrice] = useState<string>("575000000");
-  const [dpPercent, setDpPercent] = useState<string>("30");
+  const [dpAmount, setDpAmount] = useState<string>("172500000");
   const [tenor, setTenor] = useState<string>("5");
   const [margin, setMargin] = useState<string>("15");
   const [copied, setCopied] = useState(false);
 
   const result = useMemo(() => {
     const p = parseFloat(price) || 0;
-    const dp = parseFloat(dpPercent) || 0;
+    const dp = parseFloat(dpAmount) || 0;
     const t = parseFloat(tenor) || 1;
     const m = parseFloat(margin) || 0;
 
-    const dpAmount = p * (dp / 100);
     const sellingPrice = p * (1 + m / 100);
-    const loanAmount = sellingPrice - dpAmount;
+    const loanAmount = sellingPrice - dp;
     const monthly = loanAmount / (t * 12);
     const totalPayment = loanAmount;
     const profitAmount = p * (m / 100);
+    const dpPercentVal = p > 0 ? ((dp / p) * 100) : 0;
 
     return {
       propertyPrice: p,
-      dpAmount,
-      dpPercent: dp,
+      dpAmount: dp,
+      dpPercent: dpPercentVal,
       sellingPrice,
       loanAmount,
       monthly,
@@ -436,10 +429,10 @@ function SyariahCalculator() {
       profitAmount,
       marginPercent: m,
     };
-  }, [price, dpPercent, tenor, margin]);
+  }, [price, dpAmount, tenor, margin]);
 
   const copyResult = () => {
-    const text = `Syariah — ${formatJuta(result.propertyPrice)}jt, DP ${result.dpPercent}% ({formatJuta(result.dpAmount)}jt), ${result.tenorYears}thn margin ${result.marginPercent}% → Cicilan: Rp ${formatRupiah(result.monthly)}/bln`;
+    const text = `Syariah — ${formatJuta(result.propertyPrice)}jt, DP Rp ${formatRupiah(result.dpAmount)} (${result.dpPercent.toFixed(1)}%), ${result.tenorYears}thn margin ${result.marginPercent}% → Cicilan: Rp ${formatRupiah(result.monthly)}/bln`;
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
       toast.success("Disalin ke clipboard!");
@@ -449,7 +442,7 @@ function SyariahCalculator() {
 
   const resetForm = () => {
     setPrice("575000000");
-    setDpPercent("30");
+    setDpAmount("172500000");
     setTenor("5");
     setMargin("15");
   };
@@ -485,20 +478,18 @@ function SyariahCalculator() {
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5 text-sm font-medium">
-                <Percent className="w-3.5 h-3.5 text-gray-400" />
-                Uang Muka (DP)
+                <Banknote className="w-3.5 h-3.5 text-gray-400" />
+                Uang Muka (DP) — Rupiah
               </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  value={dpPercent}
-                  onChange={(e) => setDpPercent(e.target.value)}
-                  className="text-lg font-semibold"
-                />
-                <span className="text-gray-400 font-medium">%</span>
-              </div>
+              <Input
+                type="number"
+                value={dpAmount}
+                onChange={(e) => setDpAmount(e.target.value)}
+                className="text-lg font-semibold"
+                placeholder="Contoh: 172500000"
+              />
               <p className="text-xs text-gray-400">
-                Rp {formatRupiah(result.dpAmount)} ({formatJuta(result.dpAmount)} jt)
+                Rp {formatRupiah(parseFloat(dpAmount) || 0)} ({formatJuta(parseFloat(dpAmount) || 0)} jt) ≈ {result.dpPercent.toFixed(1)}% dari harga
               </p>
             </div>
             <div className="space-y-2">
@@ -608,7 +599,7 @@ function SyariahCalculator() {
             </div>
             <div className="bg-white/10 rounded-xl p-3">
               <p className="text-amber-200 text-[11px]">Uang Muka</p>
-              <p className="text-sm font-semibold mt-0.5">{result.dpPercent}% ({formatJuta(result.dpAmount)} jt)</p>
+              <p className="text-sm font-semibold mt-0.5">{result.dpPercent.toFixed(1)}% ({formatJuta(result.dpAmount)} jt)</p>
             </div>
             <div className="bg-white/10 rounded-xl p-3">
               <p className="text-amber-200 text-[11px]">Harga Jual Bank</p>
@@ -634,7 +625,7 @@ function SyariahCalculator() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <TrendingDown className="w-4 h-4 text-gray-400" />
-            Perbandingan Cepat — DP {dpPercent}%, Margin {margin}%
+            Perbandingan Cepat — DP Rp {formatRupiah(parseFloat(dpAmount) || 0)}, Margin {margin}%
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -653,7 +644,7 @@ function SyariahCalculator() {
                 <tr className="border-t border-gray-100">
                   <td className="px-4 py-3 font-medium text-gray-700 text-xs">Cicilan/bln</td>
                   {[1, 2, 3, 5].map((t) => {
-                    const dp = parseFloat(dpPercent) || 0;
+                    const dp = parseFloat(dpAmount) || 0;
                     const p = parseFloat(price) || 0;
                     const m = parseFloat(margin) || 0;
                     const monthly = calcSyariahMonthly(p, dp, m, t);
