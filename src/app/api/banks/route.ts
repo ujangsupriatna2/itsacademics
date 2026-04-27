@@ -7,8 +7,13 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get("limit") || "50");
 
+    const mitraId = process.env.MITRA_ID;
+
+    const where: Record<string, unknown> = { isActive: true };
+    if (mitraId) where.mitraId = mitraId;
+
     const items = await db.bank.findMany({
-      where: { isActive: true },
+      where,
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
       take: limit,
     });

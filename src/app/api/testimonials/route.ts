@@ -8,7 +8,10 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") || "50");
     const featured = searchParams.get("featured");
 
+    const mitraId = process.env.MITRA_ID;
+
     const where: Record<string, unknown> = {};
+    if (mitraId) where.mitraId = mitraId;
     if (featured === "true") {
       where.featured = true;
     }

@@ -10,7 +10,10 @@ export async function GET(req: Request) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
 
+    const mitraId = process.env.MITRA_ID;
+
     const where: Record<string, unknown> = { published: true };
+    if (mitraId) where.mitraId = mitraId;
     if (slug) where.slug = slug;
     if (category && category !== "all") where.category = category;
 

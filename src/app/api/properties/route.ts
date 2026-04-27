@@ -9,7 +9,10 @@ export async function GET(req: Request) {
     const search = searchParams.get("search") || "";
     const slug = searchParams.get("slug") || "";
 
+    const mitraId = process.env.MITRA_ID;
+
     const where: Record<string, unknown> = { status: "available" };
+    if (mitraId) where.mitraId = mitraId;
     if (category && category !== "all") where.category = category;
     if (search) {
       where.OR = [
